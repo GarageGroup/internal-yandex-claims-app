@@ -1,0 +1,42 @@
+name: Install Infrastructure
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_CLIENT_ID: ${{ vars.DEPLOY_CLIENT_ID }}
+      AZURE_RESOURCE_GROUP_NAME: "rg-${{ vars.AZURE_NAME_ROOT }}"
+      AZURE_APP_INSIGHTS_NAME: "appi-${{ vars.AZURE_NAME_ROOT }}"
+      AZURE_LOG_ANALYTICS_WORKSPACE_NAME: "log-${{ vars.AZURE_NAME_ROOT }}"
+      AZURE_STORAGE_ACCOUNT_NAME: ${{ vars.STORAGE_ACCOUNT_NAME }}
+      AZURE_FUNCTION_PLAN_NAME: "asp-${{ vars.AZURE_NAME_ROOT }}"
+      AZURE_FUNCTION_NAME: "func-${{ vars.AZURE_NAME_ROOT }}"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Log in to Azure
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ vars.DEPLOY_TENANT_ID }}
+          subscription-id: ${{ vars.DEPLOY_SUBSCRIPTION_ID }}
+
+      - name: Install Infrastructure Resources
+        uses: azure/cli@v3
+        with:
+          inlineScript: |
+            bash ./.infra/scripts/install-azure-resources.sh
+
+      - name: Azure Logout
+        uses: azure/cli@v3
+        with:
+          inlineScript: az logout

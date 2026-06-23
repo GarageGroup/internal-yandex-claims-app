@@ -1,0 +1,46 @@
+<Solution>
+  <Folder Name="/.github/">
+    <File Path=".github/workflows/build.yml" />
+    <File Path=".github/workflows/deploy.yml" />
+    <File Path=".github/workflows/delete.yml" />
+    <File Path=".github/workflows/install.yml" />
+    <File Path=".github/workflows/publish.yml" />
+  </Folder>
+  <Folder Name="/app/">
+    <Project Path="src/app/AzureFunc/AzureFunc.csproj" />
+  </Folder>
+  <Folder Name="/service/" />
+  <Folder Name="/src/" />
+  <Folder Name="/src/service/" />
+  <Folder Name="/src/service/Image/" />
+  <Folder Name="/src/service/Image/Contract/">
+    <Project Path="src/service/Image/Contract/Contract.csproj" />
+  </Folder>
+  <Folder Name="/src/service/Image/Api/">
+    <Project Path="src/service/Image/Api/Api.csproj" />
+  </Folder>
+  <Folder Name="/src/service/Image/Test/">
+    <Project Path="src/service/Image/Test/Test.csproj" />
+  </Folder>
+  <Folder Name="/src/service/GraphApi/" />
+  <Folder Name="/src/service/GraphApi/Contract/">
+    <Project Path="src/service/GraphApi/Contract/Contract.csproj" />
+  </Folder>
+  <Folder Name="/src/service/GraphApi/Api/">
+    <Project Path="src/service/GraphApi/Api/Api.csproj" />
+  </Folder>
+  <Folder Name="/src/service/GraphApi/Test/">
+    <Project Path="src/service/GraphApi/Test/Test.csproj" />
+  </Folder>
+  <Folder Name="/src/endpoint/" />
+  <Folder Name="/src/endpoint/Claims.Provide/" />
+  <Folder Name="/src/endpoint/Claims.Provide/Contract/">
+    <Project Path="src/endpoint/Claims.Provide/Contract/Contract.csproj" />
+  </Folder>
+  <Folder Name="/src/endpoint/Claims.Provide/Handler/">
+    <Project Path="src/endpoint/Claims.Provide/Handler/Handler.csproj" />
+  </Folder>
+  <Folder Name="/src/endpoint/Claims.Provide/Test/">
+    <Project Path="src/endpoint/Claims.Provide/Test/Test.csproj" />
+  </Folder>
+</Solution>

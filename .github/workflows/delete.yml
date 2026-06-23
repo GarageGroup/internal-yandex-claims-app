@@ -1,0 +1,56 @@
+name: Delete Artifact
+
+on:
+  release:
+    types:
+      - deleted
+
+permissions:
+  contents: write
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.release.tag_name != '' }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+
+    - name: Get version
+      id: get_version
+      run: echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+
+    - name: Delete from Azure Blob Storage
+      uses: azure/cli@v3
+      with:
+        azcliversion: latest
+        inlineScript: |
+          blob_exists=$(az storage blob exists \
+            --name ${{ vars.AZURE_ARTIFACT_NAME }}-${{ steps.get_version.outputs.version }}.zip \
+            --container-name ${{ vars.AZURE_ARTIFACT_CONTAINER_NAME }} \
+            --account-name ${{ vars.AZURE_ARTIFACT_ACCOUNT_NAME }} \
+            --account-key ${{ secrets.AZURE_ACCOUNT_KEY_ARTIFACT }} \
+            --output tsv --query exists \
+            --only-show-errors)
+
+          if [ "$blob_exists" = "true" ]; then
+            az storage blob delete \
+              --name ${{ vars.AZURE_ARTIFACT_NAME }}-${{ steps.get_version.outputs.version }}.zip \
+              --container-name ${{ vars.AZURE_ARTIFACT_CONTAINER_NAME }} \
+              --account-name ${{ vars.AZURE_ARTIFACT_ACCOUNT_NAME }} \
+              --account-key ${{ secrets.AZURE_ACCOUNT_KEY_ARTIFACT }} \
+              --only-show-errors
+          else
+            echo "Blob not found, skipping"
+          fi
+
+    - name: Delete tag from repository
+      env:
+        TAG_NAME: ${{ github.event.release.tag_name }}
+      run: |
+        if git ls-remote --exit-code --tags origin "refs/tags/$TAG_NAME" > /dev/null 2>&1; then
+          git push origin ":refs/tags/$TAG_NAME"
+        else
+          echo "Tag '$TAG_NAME' not found in origin, skipping."
+        fi

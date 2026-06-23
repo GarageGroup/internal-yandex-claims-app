@@ -1,0 +1,69 @@
+name: Publish Release
+
+on:
+  page_build:
+  release:
+    types:
+      - created
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      - name: Test
+        run: dotnet test --no-build --no-restore -c Release
+
+      - name: Publish
+        run: dotnet publish ./src/*/*/AzureFunc.csproj -c Release -r linux-x64 --self-contained false -o '${{ github.workspace }}/publish'
+
+      - name: Get version
+        id: get_version
+        run: echo "version=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+
+      - name: Get current date time
+        id: date
+        run: echo "datetime=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
+      - name: Update appsettings.json
+        run: |
+          jq '
+            .Info.ApiVersion = "${{ steps.get_version.outputs.version }}" |
+            .Info.BuildDateTime = "${{ steps.date.outputs.datetime }}"
+          ' ./publish/appsettings.json > tmp.json && mv tmp.json ./publish/appsettings.json
+
+      - name: Archive publish folder
+        run: |
+          cd ./publish
+          zip -r ${{ vars.AZURE_ARTIFACT_NAME }}-${{ steps.get_version.outputs.version }}.zip ./
+
+      - name: Upload to Azure Blob Storage
+        uses: azure/cli@v3
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az storage blob upload \
+              --container-name ${{ vars.AZURE_ARTIFACT_CONTAINER_NAME }} \
+              --file ./publish/${{ vars.AZURE_ARTIFACT_NAME }}-${{ steps.get_version.outputs.version }}.zip \
+              --account-name ${{ vars.AZURE_ARTIFACT_ACCOUNT_NAME }} \
+              --account-key ${{ secrets.AZURE_ACCOUNT_KEY_ARTIFACT }}
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{ vars.AZURE_ARTIFACT_ACCOUNT_NAME }}

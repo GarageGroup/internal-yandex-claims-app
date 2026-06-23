@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+    <FunctionsEnableWorkerIndexing>false</FunctionsEnableWorkerIndexing>
+    <FunctionsEnableExecutorSourceGen>false</FunctionsEnableExecutorSourceGen>
+    <FunctionsAutoRegisterGeneratedFunctionsExecutor>false</FunctionsAutoRegisterGeneratedFunctionsExecutor>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <NoWarn>$(NoWarn);IDE0130;CA1859</NoWarn>
+    <RootNamespace>GarageGroup.Internal.Yandex.Claims</RootNamespace>
+    <AssemblyName>GarageGroup.Internal.Yandex.Claims.AzureFunc</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="host.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="local.settings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GarageGroup.Infra.Azure.Handler" Version="1.0.2" />
+    <PackageReference Include="GarageGroup.Infra.Azure.Hosting" Version="1.2.0" />
+    <PackageReference Include="GarageGroup.Infra.HealthCheck.Handler" Version="1.0.0" />
+    <PackageReference Include="GarageGroup.Infra.Http.Api" Version="1.1.0" />
+    <PackageReference Include="GarageGroup.Infra.Http.Polly" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.24.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.7" OutputItemType="Analyzer" />
+    <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="5.3.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\endpoint\Claims.Provide\Contract\Contract.csproj" />
+    <ProjectReference Include="..\..\endpoint\Claims.Provide\Handler\Handler.csproj" />
+    <ProjectReference Include="..\..\service\GraphApi\Api\Api.csproj" />
+    <ProjectReference Include="..\..\service\GraphApi\Contract\Contract.csproj" />
+    <ProjectReference Include="..\..\service\Image\Api\Api.csproj" />
+    <ProjectReference Include="..\..\service\Image\Contract\Contract.csproj" />
+  </ItemGroup>
+
+</Project>
