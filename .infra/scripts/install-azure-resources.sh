@@ -24,6 +24,8 @@ app_insights_name="${AZURE_APP_INSIGHTS_NAME}"
 storage_account_name="${AZURE_STORAGE_ACCOUNT_NAME}"
 function_plan_name="${AZURE_FUNCTION_PLAN_NAME}"
 function_name="${AZURE_FUNCTION_NAME}"
+graph_resource_app_id="00000003-0000-0000-c000-000000000000"
+required_graph_app_roles=("User.Read.All")
 
 echo "Resource group: ${resource_group_name}"
 
@@ -290,6 +292,97 @@ apply_function_app_settings() {
   echo "Ensured Function App settings for ${function_name}"
 }
 
+ensure_graph_app_permissions() {
+  local function_principal_id
+  function_principal_id="$(az functionapp identity show \
+    --name "${function_name}" \
+    --resource-group "${resource_group_name}" \
+    --query principalId \
+    --output tsv \
+    --only-show-errors 2>/dev/null || true)"
+
+  if [ -z "${function_principal_id}" ] || [ "${function_principal_id}" = "null" ] || [ "${function_principal_id}" = "None" ]; then
+    echo "Failed to resolve managed identity principal id for Function app: ${function_name}" >&2
+    exit 1
+  fi
+
+  local graph_service_principal_id
+  graph_service_principal_id="$(az rest \
+    --method GET \
+    --url "https://graph.microsoft.com/v1.0/servicePrincipals(appId='${graph_resource_app_id}')?\$select=id,appRoles" \
+    --query id \
+    --output tsv \
+    --only-show-errors)"
+
+  if [ -z "${graph_service_principal_id}" ] || [ "${graph_service_principal_id}" = "null" ] || [ "${graph_service_principal_id}" = "None" ]; then
+    echo "Failed to resolve Microsoft Graph service principal id" >&2
+    exit 1
+  fi
+
+  verify_graph_app_role_assignment() {
+    local graph_app_role_id="$1"
+    local assigned_count=""
+    local attempt
+
+    for attempt in 1 2 3 4 5 6; do
+      assigned_count="$(az rest \
+        --method GET \
+        --url "https://graph.microsoft.com/v1.0/servicePrincipals/${function_principal_id}/appRoleAssignments" \
+        --query "value[?resourceId=='${graph_service_principal_id}' && appRoleId=='${graph_app_role_id}'] | length(@)" \
+        --output tsv \
+        --only-show-errors 2>/dev/null || true)"
+
+      if [ "${assigned_count:-0}" != "0" ]; then
+        return 0
+      fi
+
+      sleep 5
+    done
+
+    return 1
+  }
+
+  local graph_app_role_name
+  for graph_app_role_name in "${required_graph_app_roles[@]}"; do
+    local graph_app_role_id
+    graph_app_role_id="$(az rest \
+      --method GET \
+      --url "https://graph.microsoft.com/v1.0/servicePrincipals(appId='${graph_resource_app_id}')?\$select=appRoles" \
+      --query "appRoles[?value=='${graph_app_role_name}' && contains(allowedMemberTypes, 'Application')].id | [0]" \
+      --output tsv \
+      --only-show-errors)"
+
+    if [ -z "${graph_app_role_id}" ] || [ "${graph_app_role_id}" = "null" ] || [ "${graph_app_role_id}" = "None" ]; then
+      echo "Failed to resolve Microsoft Graph app role id for permission: ${graph_app_role_name}" >&2
+      exit 1
+    fi
+
+    if verify_graph_app_role_assignment "${graph_app_role_id}"; then
+      echo "Microsoft Graph permission already assigned to managed identity: ${graph_app_role_name}"
+      continue
+    fi
+
+    if ! az rest \
+      --method POST \
+      --url "https://graph.microsoft.com/v1.0/servicePrincipals/${function_principal_id}/appRoleAssignments" \
+      --headers "Content-Type=application/json" \
+      --body "{\"principalId\":\"${function_principal_id}\",\"resourceId\":\"${graph_service_principal_id}\",\"appRoleId\":\"${graph_app_role_id}\"}" \
+      --only-show-errors \
+      --output none; then
+      echo "Failed to assign Microsoft Graph permission '${graph_app_role_name}' to the managed identity for ${function_name}." >&2
+      echo "The deployment principal must be allowed to grant Microsoft Graph app roles in the tenant." >&2
+      exit 1
+    fi
+
+    if ! verify_graph_app_role_assignment "${graph_app_role_id}"; then
+      echo "Failed to verify Microsoft Graph permission assignment for managed identity: ${graph_app_role_name}" >&2
+      exit 1
+    fi
+
+    echo "Granted Microsoft Graph permission to managed identity: ${graph_app_role_name}"
+  done
+}
+
 if az functionapp show \
   --resource-group "${resource_group_name}" \
   --name "${function_name}" \
@@ -299,6 +392,7 @@ if az functionapp show \
 
   ensure_system_assigned_identity_enabled
   apply_function_app_settings
+  ensure_graph_app_permissions
   exit 0
 fi
 
@@ -317,5 +411,6 @@ az functionapp create \
   --output none
 
 apply_function_app_settings
+ensure_graph_app_permissions
 
 echo "Created Function app: ${function_name}"

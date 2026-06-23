@@ -13,9 +13,9 @@ partial class GraphApi
         AsyncPipeline.Pipe(
             input, cancellationToken)
         .Pipe(
-            static userId => new HttpSendIn(
+            static _ => new HttpSendIn(
                 method: HttpVerb.Get,
-                requestUri: "me")
+                requestUri: "users?$top=1&$select=id")
             {
                 SuccessType = HttpSuccessType.OnlyStatusCode
             })
