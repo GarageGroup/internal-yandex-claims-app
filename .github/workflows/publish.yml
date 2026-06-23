@@ -29,8 +29,8 @@ jobs:
       - name: Build
         run: dotnet build --no-restore -c Release
 
-      # - name: Test
-      #   run: dotnet test --no-build --no-restore -c Release
+      - name: Test
+        run: dotnet test --no-build --no-restore -c Release
 
       - name: Publish
         run: dotnet publish ./src/*/*/AzureFunc.csproj -c Release -r linux-x64 --self-contained false -o '${{ github.workspace }}/publish'

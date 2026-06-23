@@ -1,8 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 using PrimeFuncPack;
+
+[assembly: InternalsVisibleTo("GarageGroup.Internal.Yandex.Claims.Provide.Test")]
 
 namespace GarageGroup.Internal.Yandex.Claims;
 

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace GarageGroup.Internal.Yandex.Claims;
+﻿namespace GarageGroup.Internal.Yandex.Claims;
 
 public sealed record class UserClaims
 {
