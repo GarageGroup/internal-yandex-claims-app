@@ -38,5 +38,21 @@ partial class ClaimsProvideHandler
                             claims: new(
                                 avatar: success.Base64Image))
                     ]
-                }));
+                }))
+        .Recover(
+            RecoverFailure);
+
+    private static Result<ClaimsProvideOut, Failure<HandlerFailureCode>> RecoverFailure(Failure<HandlerFailureCode> failure)
+        =>
+        new ClaimsProvideOut(
+            data: new()
+                {
+                    Actions =
+                    [
+                        new(
+                            claims: new(
+                                avatar: string.Empty))
+                    ]
+                });
+
 }

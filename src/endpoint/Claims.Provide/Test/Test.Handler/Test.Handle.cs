@@ -25,7 +25,7 @@ partial class ClaimsProvideHandlerTest
     }
 
     [Fact]
-    public static async Task HandleRequiredAsync_GraphGetProfileAvatarResultIsFailure_ExpectPersistentFailure()
+    public static async Task HandleRequiredAsync_GraphGetProfileAvatarResultIsFailure_ExpectEmptySuccess()
     {
         var sourceException = new Exception("Some exception");
         var sourceFailure = Failure.Create("Some failure message", sourceException);
@@ -35,7 +35,17 @@ partial class ClaimsProvideHandlerTest
         var handler = new ClaimsProvideHandler(imageApi, graphApi);
 
         var actual = await handler.HandleRequiredAsync(SomeInput, TestContext.Current.CancellationToken);
-        var expected = Failure.Create(HandlerFailureCode.Persistent, "Some failure message", sourceException);
+        var expected = Result.Success(
+            new ClaimsProvideOut(
+                data: new()
+                {
+                    Actions =
+                    [
+                        new(
+                            claims: new(
+                                avatar: string.Empty))
+                    ]
+                }));
 
         Assert.StrictEqual(expected, actual);
     }
@@ -79,7 +89,7 @@ partial class ClaimsProvideHandlerTest
     }
 
     [Fact]
-    public static async Task HandleRequiredAsync_ImageCompressResultIsFailure_ExpectPersistentFailure()
+    public static async Task HandleRequiredAsync_ImageCompressResultIsFailure_ExpectEmptySuccess()
     {
         var sourceException = new Exception("Some exception");
         var sourceFailure = Failure.Create("Some failure message", sourceException);
@@ -89,8 +99,18 @@ partial class ClaimsProvideHandlerTest
         var handler = new ClaimsProvideHandler(imageApi, graphApi);
 
         var actual = await handler.HandleRequiredAsync(SomeInput, TestContext.Current.CancellationToken);
-        var expected = Failure.Create(HandlerFailureCode.Persistent, "Some failure message", sourceException);
-
+        var expected = Result.Success(
+            new ClaimsProvideOut(
+                data: new()
+                {
+                    Actions =
+                    [
+                        new(
+                            claims: new(
+                                avatar: string.Empty))
+                    ]
+                }));
+                
         Assert.StrictEqual(expected, actual);
     }
 
