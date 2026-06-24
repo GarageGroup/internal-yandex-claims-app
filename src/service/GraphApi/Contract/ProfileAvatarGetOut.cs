@@ -1,6 +1,6 @@
 namespace GarageGroup.Internal.Yandex.Claims;
 
-public sealed record class ProfileAvatarGetOut
+public readonly record struct ProfileAvatarGetOut
 {
-    public required byte[] Image { get; init; }
+    public byte[]? Image { get; init; }
 }

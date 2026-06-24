@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using GarageGroup.Infra;
+using Microsoft.Extensions.Logging;
 
 namespace GarageGroup.Internal.Yandex.Claims;
 
@@ -20,16 +21,32 @@ partial class ClaimsProvideHandler
         .PipeValue(
             graphApi.GetProfileAvatarAsync)
         .Map(
-            static @out => new ImageCompressIn
-            {
-                ImageData = @out.Image
-            },
-            static failure => failure.WithFailureCode(HandlerFailureCode.Persistent))
+            static @out => @out.Image,
+            MapFailure)
         .Forward(
-            imageApi.CompressAsync,
-            static failure => failure.WithFailureCode(HandlerFailureCode.Persistent))
-        .MapSuccess(
-            success => new ClaimsProvideOut(
+            CompressImage)
+        .OnFailure(
+            failure => logger.LogError(failure.SourceException, "Error: {failureMessage}", failure.FailureMessage))
+        .Recover(
+            static _ => EmptyClaims);
+
+    private Result<ClaimsProvideOut, Failure<HandlerFailureCode>> CompressImage(byte[]? image)
+    {
+        if (image?.Length is not > 0)
+        {
+            return EmptyClaims;
+        }
+
+        var @in = new ImageCompressIn
+        {
+            ImageData = image
+        };
+
+        return imageApi.CompressImage(@in).Map(MapSuccess, MapFailure);
+
+        static ClaimsProvideOut MapSuccess(ImageCompressOut success)
+            =>
+            new(
                 data: new()
                 {
                     Actions =
@@ -38,21 +55,10 @@ partial class ClaimsProvideHandler
                             claims: new(
                                 avatar: success.Base64Image))
                     ]
-                }))
-        .Recover(
-            RecoverFailure);
-
-    private static Result<ClaimsProvideOut, Failure<HandlerFailureCode>> RecoverFailure(Failure<HandlerFailureCode> failure)
-        =>
-        new ClaimsProvideOut(
-            data: new()
-                {
-                    Actions =
-                    [
-                        new(
-                            claims: new(
-                                avatar: string.Empty))
-                    ]
                 });
+    }
 
+    private static Failure<HandlerFailureCode> MapFailure(Failure<Unit> failure)
+        =>
+        failure.WithFailureCode(HandlerFailureCode.Persistent);
 }

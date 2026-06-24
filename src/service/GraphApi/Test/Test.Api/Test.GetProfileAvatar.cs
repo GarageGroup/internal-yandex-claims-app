@@ -43,6 +43,23 @@ partial class GraphApiTest
         Assert.StrictEqual(expected, actual);
     }
 
+    [Fact]
+    public static async Task GetProfileAvatarAsync_HttpResultIsNotFound_ExpectSuccess()
+    {
+        var httpApi = BuildHttpApi(
+            new HttpSendFailure
+            {
+                StatusCode = HttpFailureCode.NotFound
+            });
+
+        var api = new GraphApi(httpApi);
+
+        var actual = await api.GetProfileAvatarAsync(SomeInput, TestContext.Current.CancellationToken);
+        var expected = Result.Success<ProfileAvatarGetOut>(default);
+
+        Assert.StrictEqual(expected, actual);
+    }
+
     [Theory]
     [MemberData(nameof(GraphApiSource.SuccessHttpGetProfileAvatarTestData), MemberType = typeof(GraphApiSource))]
     public static async Task GetProfileAvatarAsync_HttpResultIsSuccess_ExpectSuccess(

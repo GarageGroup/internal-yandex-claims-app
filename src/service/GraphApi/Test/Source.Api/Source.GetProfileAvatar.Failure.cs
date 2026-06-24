@@ -1,5 +1,4 @@
 using System;
-using System.Net.Mime;
 using GarageGroup.Infra;
 using Xunit;
 
@@ -14,18 +13,6 @@ partial class GraphApiSource
             {
                 default,
                 Failure.Create("An unexpected http failure occured: 0.")
-            },
-            {
-                new()
-                {
-                    StatusCode = HttpFailureCode.NotFound,
-                    Body = new()
-                    {
-                        Type = new(MediaTypeNames.Application.Json),
-                        Content = BinaryData.FromString("Some failure message")
-                    }
-                },
-                Failure.Create("An unexpected http failure occured: 404.\nSome failure message")
             },
             {
                 new()

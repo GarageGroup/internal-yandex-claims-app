@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
 namespace GarageGroup.Internal.Yandex.Claims.Provide.Test;
@@ -47,12 +48,16 @@ public static partial class ClaimsProvideHandlerTest
         return api;
     }
 
+    private static ClaimsProvideHandler BuildHandler(IImageApi imageApi, IGraphApi graphApi)
+        =>
+        new(imageApi, graphApi, NullLogger<ClaimsProvideHandler>.Instance);
+
     private static IImageApi BuildImageApi(
         in Result<ImageCompressOut, Failure<Unit>> result)
     {
         var api = Substitute.For<IImageApi>();
 
-        api.CompressAsync(Arg.Any<ImageCompressIn>())
+        api.CompressImage(Arg.Any<ImageCompressIn>())
             .Returns(result);
 
         return api;

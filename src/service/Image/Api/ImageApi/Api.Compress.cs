@@ -5,7 +5,7 @@ namespace GarageGroup.Internal.Yandex.Claims;
 
 partial class ImageApi
 {
-    public Result<ImageCompressOut, Failure<Unit>> CompressAsync(ImageCompressIn input)
+    public Result<ImageCompressOut, Failure<Unit>> CompressImage(ImageCompressIn input)
     {
         var imageContent = input.ImageData;
         if (imageContent.Length is 0)

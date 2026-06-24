@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using GarageGroup.Infra;
 using GarageGroup.Internal.Yandex.Claims.Provide.Test.Source.Handler;
 using NSubstitute;
 using Xunit;
@@ -17,7 +16,7 @@ partial class ClaimsProvideHandlerTest
     {
         var graphApi = BuildGraphApi(SomeProfileAvatarGetOutput);
         var imageApi = BuildImageApi(SomeImageCompressOutput);
-        var handler = new ClaimsProvideHandler(imageApi, graphApi);
+        var handler = BuildHandler(imageApi, graphApi);
 
         _ = await handler.HandleRequiredAsync(input, TestContext.Current.CancellationToken);
 
@@ -32,7 +31,7 @@ partial class ClaimsProvideHandlerTest
 
         var graphApi = BuildGraphApi(sourceFailure);
         var imageApi = BuildImageApi(SomeImageCompressOutput);
-        var handler = new ClaimsProvideHandler(imageApi, graphApi);
+        var handler = BuildHandler(imageApi, graphApi);
 
         var actual = await handler.HandleRequiredAsync(SomeInput, TestContext.Current.CancellationToken);
         var expected = Result.Success(
@@ -57,11 +56,50 @@ partial class ClaimsProvideHandlerTest
 
         var graphApi = BuildGraphApi(sourceFailure);
         var imageApi = BuildImageApi(SomeImageCompressOutput);
-        var handler = new ClaimsProvideHandler(imageApi, graphApi);
+        var handler = BuildHandler(imageApi, graphApi);
 
         _ = await handler.HandleRequiredAsync(SomeInput, TestContext.Current.CancellationToken);
 
-        _ = imageApi.DidNotReceive().CompressAsync(Arg.Any<ImageCompressIn>());
+        _ = imageApi.DidNotReceive().CompressImage(Arg.Any<ImageCompressIn>());
+    }
+
+    [Theory]
+    [MemberData(nameof(ClaimsProvideHandlerSource.EmptyProfileAvatarGetOutputTestData), MemberType = typeof(ClaimsProvideHandlerSource))]
+    public static async Task HandleRequiredAsync_GraphGetProfileAvatarResultHasNoImage_ExpectImageCompressCalledNever(
+        ProfileAvatarGetOut profileAvatarGetOutput)
+    {
+        var graphApi = BuildGraphApi(profileAvatarGetOutput);
+        var imageApi = BuildImageApi(SomeImageCompressOutput);
+        var handler = BuildHandler(imageApi, graphApi);
+
+        _ = await handler.HandleRequiredAsync(SomeInput, TestContext.Current.CancellationToken);
+
+        _ = imageApi.DidNotReceive().CompressImage(Arg.Any<ImageCompressIn>());
+    }
+
+    [Theory]
+    [MemberData(nameof(ClaimsProvideHandlerSource.EmptyProfileAvatarGetOutputTestData), MemberType = typeof(ClaimsProvideHandlerSource))]
+    public static async Task HandleRequiredAsync_GraphGetProfileAvatarResultHasNoImage_ExpectEmptySuccess(
+        ProfileAvatarGetOut profileAvatarGetOutput)
+    {
+        var graphApi = BuildGraphApi(profileAvatarGetOutput);
+        var imageApi = BuildImageApi(SomeImageCompressOutput);
+        var handler = BuildHandler(imageApi, graphApi);
+
+        var actual = await handler.HandleRequiredAsync(SomeInput, TestContext.Current.CancellationToken);
+        var expected = Result.Success(
+            new ClaimsProvideOut(
+                data: new()
+                {
+                    Actions =
+                    [
+                        new(
+                            claims: new(
+                                avatar: string.Empty))
+                    ]
+                }));
+
+        Assert.StrictEqual(expected, actual);
     }
 
     [Fact]
@@ -76,7 +114,7 @@ partial class ClaimsProvideHandlerTest
             });
 
         var imageApi = BuildImageApi(SomeImageCompressOutput);
-        var handler = new ClaimsProvideHandler(imageApi, graphApi);
+        var handler = BuildHandler(imageApi, graphApi);
 
         _ = await handler.HandleRequiredAsync(SomeInput, TestContext.Current.CancellationToken);
 
@@ -85,7 +123,7 @@ partial class ClaimsProvideHandlerTest
             ImageData = profileAvatarImage
         };
 
-        _ = imageApi.Received(1).CompressAsync(expectedInput);
+        _ = imageApi.Received(1).CompressImage(expectedInput);
     }
 
     [Fact]
@@ -96,7 +134,7 @@ partial class ClaimsProvideHandlerTest
 
         var graphApi = BuildGraphApi(SomeProfileAvatarGetOutput);
         var imageApi = BuildImageApi(sourceFailure);
-        var handler = new ClaimsProvideHandler(imageApi, graphApi);
+        var handler = BuildHandler(imageApi, graphApi);
 
         var actual = await handler.HandleRequiredAsync(SomeInput, TestContext.Current.CancellationToken);
         var expected = Result.Success(
@@ -110,7 +148,7 @@ partial class ClaimsProvideHandlerTest
                                 avatar: string.Empty))
                     ]
                 }));
-                
+
         Assert.StrictEqual(expected, actual);
     }
 
@@ -124,7 +162,7 @@ partial class ClaimsProvideHandlerTest
 
         var graphApi = BuildGraphApi(SomeProfileAvatarGetOutput);
         var imageApi = BuildImageApi(imageCompressOutput);
-        var handler = new ClaimsProvideHandler(imageApi, graphApi);
+        var handler = BuildHandler(imageApi, graphApi);
 
         var actual = await handler.HandleRequiredAsync(SomeInput, TestContext.Current.CancellationToken);
 

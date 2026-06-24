@@ -30,9 +30,7 @@ partial class GraphApiSource
                     StatusCode = HttpSuccessCode.OK
                 },
                 new()
-                {
-                    Image = []
-                }
+                { }
             }
         };
 }

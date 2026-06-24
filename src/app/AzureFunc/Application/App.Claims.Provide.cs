@@ -1,4 +1,6 @@
 ﻿using GarageGroup.Infra;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using PrimeFuncPack;
 
 namespace GarageGroup.Internal.Yandex.Claims;
@@ -12,5 +14,7 @@ partial class Application
             UseImageApi())
         .With(
             UseGraphApi())
+        .With(
+            ServiceProviderServiceExtensions.GetRequiredService<ILoggerFactory>)
         .UseClaimsProvideHandler();
 }

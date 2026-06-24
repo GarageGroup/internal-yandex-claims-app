@@ -9,11 +9,11 @@ namespace GarageGroup.Internal.Yandex.Claims.Image.Test;
 partial class ImageApiTest
 {
     [Fact]
-    public static void CompressAsync_InputImageDataIsEmpty_ExpectInvalidFailure()
+    public static void CompressImage_InputImageDataIsEmpty_ExpectInvalidFailure()
     {
         var api = new ImageApi(SomeOption);
 
-        var actual = api.CompressAsync(
+        var actual = api.CompressImage(
             new ImageCompressIn
             {
                 ImageData = []
@@ -26,24 +26,24 @@ partial class ImageApiTest
 
     [Theory]
     [MemberData(nameof(ImageApiSource.CompressWithinTargetTestData), MemberType = typeof(ImageApiSource))]
-    internal static void CompressAsync_InputImageBase64LengthIsWithinTarget_ExpectSuccess(
+    internal static void CompressImage_InputImageBase64LengthIsWithinTarget_ExpectSuccess(
         ImageCompressIn input, ImageCompressOut expected)
     {
         var api = new ImageApi(SomeOption);
 
-        var actual = api.CompressAsync(input);
+        var actual = api.CompressImage(input);
 
         Assert.StrictEqual(expected, actual);
     }
 
     [Theory]
     [MemberData(nameof(ImageApiSource.CompressSuccessTestData), MemberType = typeof(ImageApiSource))]
-    internal static void CompressAsync_InputImageRequiresCompression_ExpectSuccess(
+    internal static void CompressImage_InputImageRequiresCompression_ExpectSuccess(
         ImageCompressIn input, ImageApiOption option, int expectedWidth, int expectedHeight)
     {
         var api = new ImageApi(option);
 
-        var actual = api.CompressAsync(input);
+        var actual = api.CompressImage(input);
 
         var actualBase64 = actual.SuccessOrThrow().Base64Image;
 
@@ -60,24 +60,24 @@ partial class ImageApiTest
 
     [Theory]
     [MemberData(nameof(ImageApiSource.CompressFailureTestData), MemberType = typeof(ImageApiSource))]
-    internal static void CompressAsync_ImageCannotBeReducedUnderTarget_ExpectFailure(
+    internal static void CompressImage_ImageCannotBeReducedUnderTarget_ExpectFailure(
         ImageCompressIn input, ImageApiOption option, Failure<Unit> expected)
     {
         var api = new ImageApi(option);
 
-        var actual = api.CompressAsync(input);
+        var actual = api.CompressImage(input);
 
         Assert.StrictEqual(expected, actual);
     }
 
     [Theory]
     [MemberData(nameof(ImageApiSource.InvalidImageDataTestData), MemberType = typeof(ImageApiSource))]
-    internal static void CompressAsync_InputImageDataIsInvalid_ExpectVipsException(
+    internal static void CompressImage_InputImageDataIsInvalid_ExpectVipsException(
         ImageCompressIn input)
     {
         var api = new ImageApi(SomeOption);
 
         _ = Assert.Throws<NetVips.VipsException>(
-            () => api.CompressAsync(input));
+            () => api.CompressImage(input));
     }
 }

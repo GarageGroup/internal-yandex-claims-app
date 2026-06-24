@@ -18,10 +18,16 @@ partial class GraphApi
                 requestUri: $"users/{userId}/photo/$value"))
         .PipeValue(
             httpApi.SendAsync)
-        .Map(
-            static @out => new ProfileAvatarGetOut
+        .Recover(
+            static failure => failure.StatusCode switch
             {
-                Image = @out.Body.Content?.ToArray() ?? []
+                HttpFailureCode.NotFound => Result.Success<ProfileAvatarGetOut>(default),
+                _ => failure
             },
+            static success => new ProfileAvatarGetOut
+            {
+                Image = success.Body.Content?.ToArray()
+            })
+        .MapFailure(
             static failure => failure.ToStandardFailure().WithFailureCode<Unit>(default));
 }
